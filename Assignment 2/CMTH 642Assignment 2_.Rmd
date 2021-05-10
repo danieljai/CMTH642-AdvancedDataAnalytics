@@ -1,0 +1,148 @@
+---
+title: 'CMTH 642 Data Analytics: Advanced Methods'
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+<center> <h1> Assignment 2 (10%) </h1> </center>
+<center>  <h3> Andy Lee </h2> </center>
+<center> <h3> DHC 500163559 </h2> </center>
+---
+
+#### 1. Read the csv file (USDA_Clean.csv) in the folder and assign it to a data frame. (3 points)
+```{r}
+dfClean <- read.csv("USDA_Clean.csv")
+
+```
+
+#### 2. Check the datatypes of the attributes. (3 points)
+```{r}
+names(dfClean)
+sapply(dfClean,typeof)
+```
+
+#### 3. Visualize the correlation among Calories, Protein, Total Fat, Carbohydrate, Sodium and Cholesterol. (7 points)
+```{r}
+dfClean.isolatedCol <- dfClean[,c("Calories","Protein","TotalFat","Carbohydrate","Sodium","Cholesterol")]
+plot(dfClean.isolatedCol)
+```
+
+#### 4. Is the correlation between Calories and Total Fat statistically significant? Why? (7 points)
+```{r}
+cor(dfClean.isolatedCol)
+# Yes. Based on the plots generated in #3, we visually see the plot for Calories and TotalFat resembles a fairly straight line. This hints a correlation between the two. On further inspection using cor(), we can see the correlation between Calories and Total Fat is 0.80. Since it is very close to 1, it confirms our observation that Calories and TotalFat is highly correlated.
+```
+
+#### 5. Create a Linear Regression Model, using Calories as the dependent variable Protein, Total Fat, Carbohydrate, Sodium and Cholesterol as the independent variables. (7 points)
+```{r}
+# INSERT YOUR CODE HERE.
+dfClean.model <- lm(Calories~Protein+TotalFat+Carbohydrate+Sodium+Cholesterol, data=dfClean)
+summary(dfClean.model)
+summary(dfClean.model)$coefficient
+```
+
+#### 6. Write the Linear Regression Equation, using Calories as the dependent variable whereas Protein, TotalFat, Carbohydrate, Sodium and Cholesterol as the independent variables. (7 points)
+
+```{r eval=FALSE, include=FALSE}
+# WRITE YOUR ANSWER AS A COMMENT.
+# Answer above.
+
+```
+$$\hat y=3.9883 + protein(3.9892)+totalfat(8.7717)+carbohydrate(3.7432)+sodium(0.0003)+cholesterol(0.0110)$$
+
+#### 7. Which independent variable is the least significant? Why? (7 points)
+```{r}
+summary(dfClean.model)
+# Sodium is the least significant with the smallest p-value. It also has the smallest coefficient among all the independent variables which means it contributes the least to the linear regression equation.
+```
+
+#### 8. A new product is just produced with the following data: Protein=0.1, TotalFat=35, Carbohydrate=405, Sodium=440, Cholesterol=70, Sugar=NA, Calcium=35, Iron=NA, Potassium=35, VitaminC=10,	VitaminE=NA, VitaminD=NA. Based on the model you created, what is the predicted value for Calories? (7 points)
+```{r}
+dfPredict <- data.frame(Protein=0.1, TotalFat=35, Carbohydrate=405, Sodium=440, Cholesterol=70, Sugar=NA, Calcium=35, Iron=NA, Potassium=35, VitaminC=10,	VitaminE=NA, VitaminD=NA)
+dfPredictedCalories <- predict(dfClean.model, dfPredict)
+dfPredictedCalories
+
+```
+
+#### 9. If the Sodium amount increases from 440 to 44440 (10000% increase), how much change will occur on Calories in percent? Explain why? (7 points)
+```{r}
+dfPredictHighSodium <- data.frame(Protein=0.1, TotalFat=35, Carbohydrate=405, Sodium=44440, Cholesterol=70, Sugar=NA, Calcium=35, Iron=NA, Potassium=35, VitaminC=10,	VitaminE=NA, VitaminD=NA)
+dfPredictedHighSodiumCalories <- predict(dfClean.model, dfPredictHighSodium)
+dfPredictedHighSodiumCalories
+# calories increase from 1828 to 1843.
+
+(dfPredictedHighSodiumCalories - dfPredictedCalories)/dfPredictedCalories
+# That is only a 0.8% increase which is expected since Sodium only has a coefficient of 0.0003.
+# It will take about 3.3k of Sodium just to raise one Calorie.
+```
+
+
+#### 10. A study of primary education asked elementaty school students to retell two book articles that they read earlier in the week. The first (Article 1) had no pictures, and the second (Article 2) was illustrated with pictures. An expert listened to recordings of the students retelling each article and assigned a score for certain uses of language. Higher scores are better. Here are the data for five readers in this study:
+
+#### Article 1   0.40   0.72   0.00   0.36   0.55
+
+#### Article 2   0.77   0.49   0.66   0.28   0.38
+
+
+#### A) What are $H_0$ and $H_a$ ? (5 points)
+```{r}
+# H_0 = the score distribution are identical
+# H_a = there's a difference in score distribution.
+```
+
+#### B) Is this a paired or unpaired experiment? (5 points)
+```{r}
+# This is a paired experiment.
+```
+
+#### C) Based on your previous answer, which nonparametric test statistic would you use to compare the medians of Article 1 and Article 2. (5 points) 
+```{r}
+# Wilcoxon signed rank-sum
+```
+
+#### D) Use a nonparametric test statistic to check if there is a statistically significant difference between the medians of Article 1 and Article 2. (5 points) 
+```{r}
+article.1 <- c (.4,.72,0,.36,.55)
+article.2 <- c (.77,.49,.66,.28,.38)
+wilcox.test(article.2, article.1, paired = T)
+```
+
+#### E) Will you accept or reject your Null Hypothesis? ($\alpha = 0.05$) Do illustrations improve how the students retell an article or not? Why? (5 points)
+```{r}
+# Since p-value > alpha = 0.05, we cannot reject H_0. 
+# There's insufficient evidence to validate that illustration improves students retell.
+```
+
+#### 11. Two companies selling toothpastes with the lable of 100 grams per tube on the package. We randomly bought eight toothpastes from each company A and B from random stores. Afterwards, we scaled them using high precision scale. Our measurements are recorded as follows:
+
+#### Company A: 97.1   101.3   107.8   101.9   97.4    104.5   99.5    95.1
+#### Company B: 103.5  105.3   106.5   107.9   102.1   105.6   109.8   97.2
+
+
+#### A) Is this a paired or unpaired experiment? (5 points)
+```{r}
+# this is an unpaired experiment.
+```
+
+#### B) Based on your previous answer, which nonparametric test statistic would you use to compare the median of Company A and Company B. (5 points) 
+```{r}
+# Wilcoxon Rank sum test
+```
+
+#### C) Use a nonparametric test statistic to check if there is a statistically significant difference between the median of Company A and Company B. (5 points) 
+```{r}
+toothpaste.a <- c(97.1,101.3,107.8,101.9,97.4, 104.5,99.5, 95.1)
+toothpaste.b <- c(103.5,105.3,106.5,107.9,102.1,105.6,109.8,97.2)
+wilcox.test(toothpaste.a,toothpaste.b)
+```
+
+#### D) Will you accept or reject your Null Hypothesis? ($\alpha = 0.05$) Are packaging process similar or different based on weight measurements? Why? (5 points)
+```{r}
+# since p-value < \alpha = 0.05, we reject H_0.
+# Statistically significant to say they are different based on weight measurements.
+```
+
+This is the end of Assignment 2
+
+Ceni Babaoglu, PhD

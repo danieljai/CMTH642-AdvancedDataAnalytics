@@ -1,0 +1,104 @@
+---
+title: 'CMTH 642 Data Analytics: Advanced Methods'
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+<center> <h1> Assignment 3 (10%) </h1> </center>
+<center>  <h3> Andy Lee </h3> </center>
+<center> <h3> DHC 500163559 </h3> </center>
+---
+
+
+#### 1. Import to R the following fiel: http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv (The dataset is related to white Portuguese "Vinho Verde" wine. For more info: https://archive.ics.uci.edu/ml/datasets/Wine+Quality) (3 points)
+```{r}
+df <- read.csv("http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv", sep = ";")
+
+```
+
+#### 2. Check the datatypes of the attributes. (3 points)
+```{r}
+sapply(df, class)
+```
+  
+#### 3. Are there any missing values in the dataset? (4 points)
+```{r}
+sum(complete.cases(df)) == nrow(df)
+library(rapportools)
+colSums(!is.empty(df))
+# there appears some missed counts at citric.acid so we further investigate the column.
+df[is.empty(df$citric.acid),]
+# Turns out they are just 0s which is normal for citric acid.
+# Therefore conclude there are no invalid empty values.
+```
+
+#### 4. What is the correlation between the attributes other than Quality? (10 points)
+```{r}
+df.noquality <- df[,-12]
+cor(df.noquality)
+plot(df.noquality, pch=20)
+```
+
+#### 5. Graph the frequency distribution of wine quality by using Quality. (10 points)
+```{r}
+hist(df$quality, main="Wine Quality Distribution", xlab = "Wine Quality")
+```
+
+#### 6.	Reduce the levels of rating for quality to three levels as high, medium and low. Assign the levels of 3 and 4 to level 0; 5 and 6 to level 1; and 7,8 and 9 to level 2. (10 points)
+```{r}
+df.slicing <- cut(df$quality, breaks=c(2, 4, 6, 9))
+levels(df.slicing) <- c(0:2)
+df$qualitylevels <- df.slicing
+```
+
+#### 7. Normalize the data set by using the following function: (12 points)
+```{r}
+normalize <- function(x){
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+```
+
+```{r}
+df.normalized <- data.frame(lapply(df[1:11], normalize))
+colnames(df.normalized) <- paste(colnames(df.normalized), "norm", sep = ".")
+df.normalized$qualitylevels <- df$qualitylevels
+```
+
+#### 8. Divide the dataset to training and test sets. (12 points)
+```{r}
+set.seed(888)
+train_index <- sample(1:nrow(df.normalized), 0.8*nrow(df.normalized))
+df.train <- df.normalized[train_index,]
+df.test <- df.normalized[-train_index,]
+```
+
+#### 9. Use the KNN algorithm to predict the quality of wine using its attributes. (12 points)
+```{r}
+library(class)
+library(gmodels)
+df.knn <- knn(train = df.train[,-12], test = df.test[,-12], cl=df.train$qualitylevels, k=13)
+```
+
+#### 10. Display the confusion matrix to evaluate the model performance. (12 points)
+```{r}
+#install.packages('caret', dependencies = TRUE)
+library(caret)
+cm <- confusionMatrix(df.knn, df.test$qualitylevels)
+cm
+```
+
+#### 11. Evaluate the model performance by computing Accuracy, Sensitivity and Specificity. (12 points)
+```{r}
+writeLines(paste0("Accuracy: ", cm$overall['Accuracy']))
+writeLines("\nSensitivity: TP / (TP + FN)")
+writeLines(paste0("class ", c(0:2),": ", cm$byClass[1:3]))
+writeLines("\nSpecificity: TN / (TN + FP)")
+writeLines(paste0("class ", c(0:2),": ", cm$byClass[4:6]))
+
+```
+
+
+This is the end of Assignment 3
+
+Ceni Babaoglu, PhD
